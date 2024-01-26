@@ -12,40 +12,45 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 def index(request):
     keyword = request.GET.get("search")
-    msg=None
+    msg = None
     paginator = None
+
     if keyword:
-        blogs = Blog.objects.filter(Q(title__icontains=keyword) | Q(body__icontains=keyword) | 
-                                    Q(category__title__icontains=keyword))
-        
+        blogs = Blog.objects.filter(
+            Q(title__icontains=keyword) | Q(body__icontains=keyword) |
+            Q(category__title__icontains=keyword)
+        )
+
         if blogs.exists():
+            blogs = blogs.order_by('-date_published')  # Order by a relevant field
             paginator = Paginator(blogs, 4)
-            blogs = paginator.page(1)
-        
+            page = request.GET.get("page", 1)
+
+            try:
+                blogs = paginator.page(page)
+            except PageNotAnInteger:
+                blogs = paginator.page(1)
+            except EmptyPage:
+                blogs = paginator.page(paginator.num_pages)
         else:
             msg = "There is no article with the keyword"
-            
+
     else:
-        blogs = Blog.objects.filter(featured=False)
+        blogs = Blog.objects.filter(featured=False).order_by('-date_published')  # Order by a relevant field
         paginator = Paginator(blogs, 4)
-        page = request.GET.get("page")
-        
+        page = request.GET.get("page", 1)
+
         try:
             blogs = paginator.page(page)
-            
         except PageNotAnInteger:
             blogs = paginator.page(1)
-        
         except EmptyPage:
             blogs = paginator.page(paginator.num_pages)
 
-    
-    
-    
-        
     categories = Category.objects.all()
-    context = {"blogs":blogs, "msg":msg, "paginator": paginator, "cats": categories}
+    context = {"blogs": blogs, "msg": msg, "paginator": paginator, "cats": categories}
     return render(request, "blogapp/index.html", context)
+
 
 def detail(request, slug):
     blog = Blog.objects.get(slug=slug)
