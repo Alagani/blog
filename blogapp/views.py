@@ -22,7 +22,7 @@ def index(request):
         )
 
         if blogs.exists():
-            blogs = blogs.order_by('-date_published')  # Order by a relevant field
+            blogs = blogs.order_by('-created')  # Order by a relevant field
             paginator = Paginator(blogs, 4)
             page = request.GET.get("page", 1)
 
@@ -36,7 +36,7 @@ def index(request):
             msg = "There is no article with the keyword"
 
     else:
-        blogs = Blog.objects.filter(featured=False).order_by('-date_published')  # Order by a relevant field
+        blogs = Blog.objects.filter(featured=False).order_by('-created')  # Order by a relevant field
         paginator = Paginator(blogs, 4)
         page = request.GET.get("page", 1)
 
@@ -50,6 +50,7 @@ def index(request):
     categories = Category.objects.all()
     context = {"blogs": blogs, "msg": msg, "paginator": paginator, "cats": categories}
     return render(request, "blogapp/index.html", context)
+
 
 
 def detail(request, slug):
